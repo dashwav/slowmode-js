@@ -56,7 +56,7 @@ class Stats:
                 await self.bot.postgres_controller.add_emoji(
                     emoji, message_id, user, message.author, channel, True, emoji.animated)
 
-    @commands.group(aliases=['s'])
+    @commands.group(aliases=['s'], hidden=True)
     @commands.guild_only()
     async def stats(self, ctx):
         """
@@ -237,7 +237,7 @@ class Stats:
 
 
 
-    @commands.command()
+    @commands.command(hidden=True)
     @checks.has_permissions(manage_emojis=True)
     async def emojis(self, ctx, days: int=1):
         count_dict = defaultdict(int)
@@ -276,7 +276,7 @@ class Stats:
         await ctx.send(embed=local_embed)
             
 
-    @commands.command()
+    @commands.command(hidden=True)
     @checks.has_permissions(manage_emojis=True)
     async def stats_emoji(self, ctx):
         found_emojis = []
@@ -314,7 +314,7 @@ class Stats:
             temp_str += f'{key}: {emoji_count[key]}\n'
         await ctx.send(temp_str)
 
-    @commands.command()
+    @commands.command(hidden=True)
     @checks.is_admin()
     async def download_guild_history(self, ctx):
         """

@@ -37,10 +37,11 @@ async def make_tables(pool: Pool, schema: str):
     reacts = """
     CREATE TABLE IF NOT EXISTS {}.reacts (
         id SERIAL,
+        serverid BIGINT,
         trigger TEXT UNIQUE,
         reaction TEXT,
         created_at TIMESTAMP DEFAULT current_timestamp,
-        PRIMARY KEY (id, trigger)
+        PRIMARY KEY (id, serverid, trigger)
     );
     """.format(schema)
 
@@ -98,45 +99,21 @@ async def make_tables(pool: Pool, schema: str):
       PRIMARY KEY (serverid)
     );""".format(schema)
 
-    fightclub = """
-    CREATE TABLE IF NOT EXISTS {}.fightclub (
-        userid BIGINT,
-        username varchar,
-        elo INT,
-        aggrowins INT,
-        aggroloss INT,
-        defwins INT,
-        defloss INT,
-        team BIGINT,
-        PRIMARY KEY (userid)
-    );""".format(schema)
-
-    channel_index = """
-    CREATE TABLE IF NOT EXISTS {}.channel_index (
-        message_id BIGINT,
-        host_channel BIGINT,
-        target_channel BIGINT,
-        PRIMARY KEY (host_channel, target_channel)
-    );
-    """.format(schema)
-
-    reaction_spam = """
-    CREATE TABLE IF NOT EXISTS {}.reaction_spam (
-        user_id BIGINT,
-        message_id BIGINT,
-        logtime TIMESTAMP DEFAULT current_timestamp,
-        PRIMARY KEY (logtime)
+    filters = """
+    CREATE TABLE IF NOT EXISTS {}.filters (
+      serverid BIGINT,
+      channelid BIGINT,
+      whitelist varchar ARRAY
+      PRIMARY KEY(channelid)
     );
     """.format(schema)
 
     await pool.execute(reacts)
-    await pool.execute(fightclub)
     await pool.execute(spam)
     await pool.execute(roles)
     await pool.execute(clovers)
     await pool.execute(emojis)
     await pool.execute(servers)
-    await pool.execute(channel_index)
     await pool.execute(reaction_spam)
 
 
@@ -455,18 +432,18 @@ class PostgresController():
 
         await self.pool.execute(sql, trigger)
 
-    async def add_reaction(self, trigger, reaction):
+    async def add_reaction(self, server_id, trigger, reaction):
         """
         sets or updates a reaction
         """
         sql = """
-        INSERT INTO {}.reacts (trigger, reaction) VALUES ($1, $2)
+        INSERT INTO {}.reacts (serverid, trigger, reaction) VALUES ($1, $2, $3)
         ON CONFLICT (trigger)
         DO UPDATE SET
-        reaction = $3 WHERE {}.reacts.trigger = $4;
+        reaction = $3 WHERE {}.reacts.trigger = $4 AND {}.reacts.serverid = $5;
         """.format(self.schema, self.schema)
 
-        await self.pool.execute(sql, trigger, reaction, reaction, trigger)
+        await self.pool.execute(sql, server_id, trigger, reaction, reaction, trigger, server_id)
 
     async def get_reaction(self, trigger):
         """
