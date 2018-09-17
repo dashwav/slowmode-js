@@ -4,7 +4,6 @@ Database utility functions.
 from datetime import datetime, timedelta
 from typing import Optional
 import random
-from .enums import Change
 try:
     from asyncpg import Record, InterfaceError, UniqueViolationError, create_pool
     from asyncpg.pool import Pool
@@ -60,14 +59,6 @@ async def make_tables(pool: Pool, schema: str):
         PRIMARY KEY (logtime)
     );""".format(schema)
 
-    roles = """
-    CREATE TABLE IF NOT EXISTS {}.roles (
-      serverid BIGINT,
-      userid BIGINT,
-      change SMALLINT,
-      logtime TIMESTAMP,
-      PRIMARY KEY (serverid, userid, change)
-    );""".format(schema)
 
     emojis = """
     CREATE TABLE IF NOT EXISTS {}.emojis (
@@ -110,7 +101,6 @@ async def make_tables(pool: Pool, schema: str):
 
     await pool.execute(reacts)
     await pool.execute(spam)
-    await pool.execute(roles)
     await pool.execute(clovers)
     await pool.execute(emojis)
     await pool.execute(servers)
@@ -163,18 +153,6 @@ class PostgresController():
         logger.info('Tables created.')
         return cls(pool, logger, schema)
 
-    async def insert_rolechange(self, server_id: int, user_id: int,
-                                changetype: Change):
-        """
-        Inserts into the roles table a new rolechange
-        :param user_id: the id of the user changed
-        :param changetype: The type of change that occured
-        """
-        sql = """
-        INSERT INTO {}.roles VALUES ($1, $2, $3);
-        """.format(self.schema)
-
-        await self.pool.execute(sql, server_id, user_id, changetype.value)
 
     async def add_server(self, server_id: int):
         """
