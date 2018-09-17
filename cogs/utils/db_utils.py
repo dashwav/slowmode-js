@@ -104,7 +104,6 @@ async def make_tables(pool: Pool, schema: str):
     await pool.execute(clovers)
     await pool.execute(emojis)
     await pool.execute(servers)
-    await pool.execute(reaction_spam)
 
 
 class PostgresController():
