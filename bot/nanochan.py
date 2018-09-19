@@ -14,8 +14,8 @@ class Nanochan(Bot):
     """
     actual bot class
     """
-    def __init__(self, config, logger,
-                 postgres_controller: PostgresController):
+    def __init__(self, config, logger, spoils,
+                postgres_controller: PostgresController):
         """
         init for bot class
         """
@@ -30,7 +30,7 @@ class Nanochan(Bot):
         self.traffic_ignore_channels = config['traffic_ignore_channels']
         self.filter_channels = config['filter_channels']
         self.filter_allowed = config['filter_allowed']
-        self.spoiler_channels = config['spoiler_channels']
+        self.spoiler_channels = spoils
         self.wait_time = config['wait_time']
         self.clover_days = config['clover_days']
         self.dm_forward = config['dm_forward']
@@ -54,7 +54,8 @@ class Nanochan(Bot):
         postgres_cred = config['postgres_credentials']
         postgres_controller = await PostgresController.get_instance(
             logger=logger, connect_kwargs=postgres_cred)
-        return cls(config, logger, postgres_controller)
+        spoils = await postgres_controller.get_spoiler_channels(logger)
+        return cls(config, logger, spoils, postgres_controller)
 
     def start_bot(self, cogs):
         """
